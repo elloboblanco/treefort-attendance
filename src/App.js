@@ -63,17 +63,21 @@ class App extends Component {
 
         // lookup how many people are planning on attending
         const eventCount = aggregatedEvents.get(eventId);
-        if (eventCount < 50) {
+        if (eventCount < 20) {
           return null;
         }
 
         // dig up event info
         const event = events.filter(event => event.id === eventId)[0];
-        const eventName = event.name;
-        const eventVenue = event.venue.name;
-        const eventDay = moment(event.start_time).format('dddd');
+        if (event) {
+          const eventName = event.name;
+          const eventVenue = event.venue.name;
+          const eventDay = moment(event.start_time).format('dddd');
 
-        return { eventId, eventName, eventVenue, eventDay, eventCount };
+          return { eventId, eventName, eventVenue, eventDay, eventCount };
+        } else {
+          return null;
+        }
 
       }).filter(event => event !== null);
 
@@ -109,7 +113,7 @@ class App extends Component {
         margin: auto;
       `;
 
-      return  <div class={'loader'}>
+      return  <div className={'loader'}>
         <PacmanLoader
           css={override}
           sizeUnit={'px'}
