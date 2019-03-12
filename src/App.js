@@ -1,27 +1,124 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
+import MUIDataTable from 'mui-datatables';
+import { css } from '@emotion/core';
+import { PacmanLoader } from 'react-spinners';
+import moment from 'moment';
 import './App.css';
 
 class App extends Component {
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      count: 0,
+      aggregatedEvents: []
+    }
+  }
+
+  async getAggregationData() {
+    let schedules =  await fetch('https://api.tmf.zone/prod/v1/schedules');
+    schedules = await schedules.json();
+
+    let events = await fetch('https://api.tmf.zone/prod/v1/events');
+    events = await events.json();
+
+    const aggregationData = { 
+      schedules: schedules.body,
+      events: events.body 
+    };
+
+    return aggregationData;
+  }
+
+  componentDidMount() {
+    this.getAggregationData().then(({ schedules, events }) => {
+
+      // filter to only schedules updated w/in 30 days
+      const recentlyUpdatedSchedules = schedules.filter(schedule => {
+        return moment(schedule.updated).isAfter(moment().subtract(30, 'days'));
+      });
+
+      // aggregate how many schedules have the events
+      let aggregatedEvents = recentlyUpdatedSchedules.reduce((acc, schedule) => {
+        
+        // aggregate the events
+        schedule.events.forEach(event => {
+            if (event && event.includes('2019-')) {
+              if (acc.has(event)) {
+                acc.set(event, acc.get(event) + 1);
+              } else {
+                acc.set(event, 1);
+              }
+            }
+          });
+          return acc;
+
+        },
+        new Map()
+      );
+
+      // map them to a table view
+      aggregatedEvents = Array.from(aggregatedEvents.keys()).map(eventId => {
+
+        // lookup how many people are planning on attending
+        const eventCount = aggregatedEvents.get(eventId);
+        if (eventCount < 50) {
+          return null;
+        }
+
+        // dig up event info
+        const event = events.filter(event => event.id === eventId)[0];
+        const eventName = event.name;
+        const eventVenue = event.venue.name;
+        const eventDay = moment(event.start_time).format('dddd');
+
+        return { eventId, eventName, eventVenue, eventDay, eventCount };
+
+      }).filter(event => event !== null);
+
+      this.setState({
+        count: recentlyUpdatedSchedules.length,
+        aggregatedEvents: aggregatedEvents.sort((a, b) => b.eventCount - a.eventCount)
+      });
+    });
+  }
+
   render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
+    const { aggregatedEvents } = this.state;
+
+    if (aggregatedEvents.length) {
+      const columns = [
+        { name: 'eventName',  label: 'Name',          options: { sort: true } },
+        { name: 'eventVenue', label: 'Venue',         options: { sort: true } },
+        { name: 'eventDay',   label: 'Festival Day',  options: { sort: true } },
+        { name: 'eventCount', label: 'Attending',     options: { sort: true } }
+      ];
+      
+      const options = { pagination: false };
+      
+      return <MUIDataTable
+        title={'Treefort Event Predictions'}
+        data={aggregatedEvents}
+        columns={columns}
+        options={options}
+      />
+    } else {
+      const override = css`
+        display: block;
+        margin: auto;
+      `;
+
+      return  <div class={'loader'}>
+        <PacmanLoader
+          css={override}
+          sizeUnit={'px'}
+          size={50}
+          color={'white'}
+          loading={true}
+        />
       </div>
-    );
+    }
   }
 }
 
