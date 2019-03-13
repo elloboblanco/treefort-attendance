@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import MUIDataTable from 'mui-datatables';
-import { css } from '@emotion/core';
+import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';  
 import { PacmanLoader } from 'react-spinners';
 import moment from 'moment';
 import './App.css';
@@ -88,34 +88,38 @@ class App extends Component {
     });
   }
 
+  getMuiTheme = () => createMuiTheme({
+    palette: {
+      type: 'dark'
+    }
+  })
+
   render() {
     const { aggregatedEvents } = this.state;
 
     if (aggregatedEvents.length) {
       const columns = [
-        { name: 'eventName',  label: 'Name',          options: { sort: true } },
+        { name: 'eventName',  label: 'Name',          options: { sort: true, filter: false } },
         { name: 'eventVenue', label: 'Venue',         options: { sort: true } },
         { name: 'eventDay',   label: 'Festival Day',  options: { sort: true } },
-        { name: 'eventCount', label: 'Attending',     options: { sort: true } }
+        { name: 'eventCount', label: 'Attending',     options: { sort: true, filter: false } }
       ];
       
       const options = { pagination: false };
       
-      return <MUIDataTable
-        title={'Treefort Event Predictions'}
-        data={aggregatedEvents}
-        columns={columns}
-        options={options}
-      />
+      return (
+        <MuiThemeProvider theme={this.getMuiTheme()}>
+          <MUIDataTable 
+            title={'Treefort Event Predictions'} 
+            data={aggregatedEvents} 
+            columns={columns} 
+            options={options}
+          />
+        </MuiThemeProvider>
+      )
     } else {
-      const override = css`
-        display: block;
-        margin: auto;
-      `;
-
       return  <div className={'loader'}>
         <PacmanLoader
-          css={override}
           sizeUnit={'px'}
           size={50}
           color={'white'}
