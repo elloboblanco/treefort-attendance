@@ -36,7 +36,7 @@ class App extends Component {
 
       // filter to only schedules updated w/in 30 days
       const recentlyUpdatedSchedules = schedules.filter(schedule => {
-        return moment(schedule.updated).isAfter(moment().subtract(30, 'days'));
+        return moment(schedule.updated).isAfter(moment().subtract(90, 'days'));
       });
 
       // aggregate how many schedules have the events
@@ -88,11 +88,13 @@ class App extends Component {
     });
   }
 
-  getMuiTheme = () => createMuiTheme({
-    palette: {
-      type: 'dark'
-    }
-  })
+  getMuiTheme() {
+    return createMuiTheme({
+      palette: {
+        type: 'dark'
+      }
+    });
+  }
 
   render() {
     const { aggregatedEvents } = this.state;
@@ -116,9 +118,9 @@ class App extends Component {
             options={options}
           />
         </MuiThemeProvider>
-      )
+      );
     } else {
-      return  <div className={'loader'}>
+      return  (<div className={'loader'}>
         <PacmanLoader
           sizeUnit={'px'}
           size={50}
@@ -126,6 +128,7 @@ class App extends Component {
           loading={true}
         />
       </div>
+      );
     }
   }
 }
